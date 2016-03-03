@@ -5,7 +5,7 @@ plugins {
 group 'de.thatsich'
 version '1.0.0-SNAPSHOT'
 
-apply plugin: 'java'
+apply plugin: 'war'
 
 dependencyManagement {
     imports {
@@ -19,6 +19,7 @@ dependencyManagement {
 }
 
 sourceCompatibility = 1.8
+targetCompatibility = 1.8
 
 repositories {
     mavenCentral()
