@@ -52,6 +52,12 @@ dependencies {
     testCompile 'org.arquillian.universe:arquillian-junit'
     testCompile 'org.arquillian.universe:arquillian-cukes'
     testCompile 'org.arquillian.universe:arquillian-drone'
+
+    // this offers dependency resolution for gradle via ShrinkWrap
+    testCompile 'org.jboss.shrinkwrap.resolver:shrinkwrap-resolver-gradle-depchain:2.2.2'
+
+    // use AssertJ and not that shitty Hamcrest anymore
+    testCompile 'org.assertj:assertj-core:3.3.0'
 }
 
 test {
@@ -63,11 +69,19 @@ test {
 tasks.withType(AbstractCompile) each { it.options.encoding = 'UTF-8' }
 
 task resolveWildfly(type: Copy) {
+    destinationDir = project.projectDir.parentFile
+    from { zipTree(configurations.wildfly.singleFile) }
+}
+task resolveTestWildfly(type: Copy) {
     destinationDir = project.buildDir
     from { zipTree(configurations.wildfly.singleFile) }
 }
 
-test.dependsOn resolveWildfly
+task wrapper(type: Wrapper) {
+    gradleVersion = '2.11'
+}
+
+test.dependsOn resolveTestWildfly
 
 // use this to modify the arquillian.xml to point to the downloaded wildfly instance
 processTestResources {
