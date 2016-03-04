@@ -8,7 +8,8 @@ version '1.0.0-SNAPSHOT'
 apply plugin: 'war'
 
 def VERSION_WILDFLY = "10.0.0.Final"
-def NAME_WILDFLY_TEST = "wildfly-$VERSION_WILDFLY"
+def NAME_WILDFLY = "wildfly-$VERSION_WILDFLY"
+def NAME_WILDFLY_TEST = NAME_WILDFLY + "-test"
 def HOME_WILDFLY_TEST = new File(project.buildDir, NAME_WILDFLY_TEST)
 
 dependencyManagement {
@@ -69,12 +70,19 @@ test {
 tasks.withType(AbstractCompile) each { it.options.encoding = 'UTF-8' }
 
 task resolveWildfly(type: Copy) {
-    destinationDir = project.projectDir.parentFile
+    destinationDir = project.buildDir
     from { zipTree(configurations.wildfly.singleFile) }
 }
 task resolveTestWildfly(type: Copy) {
     destinationDir = project.buildDir
     from { zipTree(configurations.wildfly.singleFile) }
+
+    doLast {
+        def originalWildflyDirectory = file("${project.buildDir}/${NAME_WILDFLY}")
+        def newWildflyDirectory = file("${project.buildDir}/${NAME_WILDFLY_TEST}")
+
+        originalWildflyDirectory.renameTo(newWildflyDirectory)
+    }
 }
 
 task wrapper(type: Wrapper) {
