@@ -28,7 +28,10 @@ public class DateConversionFeatureIT
 	@Deployment
 	public static JavaArchive createArchiveAndDeploy()
 	{
-		return ShrinkWrap.create( JavaArchive.class ).addClasses( LocaleManager.class, TimeService.class ).addAsManifestResource( EmptyAsset.INSTANCE, "beans.xml" );
+		return ShrinkWrap
+			.create( JavaArchive.class )
+			.addClasses( LocaleManager.class, TimeService.class, User.class )
+			.addAsManifestResource( EmptyAsset.INSTANCE, "beans.xml" );
 	}
 
 	@Inject

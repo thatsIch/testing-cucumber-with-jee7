@@ -7,11 +7,14 @@ version '1.0.0-SNAPSHOT'
 
 apply plugin: 'war'
 
+def VERSION_WILDFLY = "10.0.0.Final"
+def NAME_WILDFLY_TEST = "wildfly-$VERSION_WILDFLY"
+def HOME_WILDFLY_TEST = new File(project.buildDir, NAME_WILDFLY_TEST)
+
 dependencyManagement {
     imports {
-
-        mavenBom 'org.wildfly.bom:wildfly-javaee7-with-tools:10.0.0.Final'
-        mavenBom 'org.wildfly:wildfly-parent:10.0.0.Final'
+        // specific BOM to have all dependencies match-up to be able to run on Wildfly
+        mavenBom "org.wildfly.bom:wildfly-javaee7-with-tools:$VERSION_WILDFLY"
 
         // for testing
         mavenBom 'org.arquillian:arquillian-universe:1.0.0.Alpha2'
@@ -32,24 +35,44 @@ repositories {
     }
 }
 
+configurations {
+    wildfly
+}
+
+
 dependencies {
-    compile 'javax:javaee-api:7.0'
+    providedCompile 'javax:javaee-api:7.0'
+
+    // to auto-download wildfly
+    wildfly "org.wildfly:wildfly-dist:$VERSION_WILDFLY@zip"
 
     // wildfly
-    testCompile 'org.wildfly.arquillian:wildfly-arquillian-container-embedded'
+    testCompile 'org.wildfly.arquillian:wildfly-arquillian-container-embedded:2.0.0.Alpha1'
 
     testCompile 'org.arquillian.universe:arquillian-junit'
     testCompile 'org.arquillian.universe:arquillian-cukes'
     testCompile 'org.arquillian.universe:arquillian-drone'
-
-    // fixes dependency on some stuff which is not even existing
-    testCompile 'xerces:xercesImpl:2.11.0'
-    testCompile 'xalan:xalan:2.7.2'
-    testCompile 'xalan:serializer:2.7.1'
-
 }
 
 test {
+    systemProperty 'java.util.logging.manager', 'org.jboss.logmanager.LogManager'
     testLogging.showStandardStreams = true
     systemProperties System.getProperties()
+}
+
+tasks.withType(AbstractCompile) each { it.options.encoding = 'UTF-8' }
+
+task resolveWildfly(type: Copy) {
+    destinationDir = project.buildDir
+    from { zipTree(configurations.wildfly.singleFile) }
+}
+
+test.dependsOn resolveWildfly
+
+// use this to modify the arquillian.xml to point to the downloaded wildfly instance
+processTestResources {
+    from(sourceSets.test.resources.srcDirs) {
+        include 'arquillian.xml'
+        expand 'HOME_WILDFLY_TEST': HOME_WILDFLY_TEST
+    }
 }
